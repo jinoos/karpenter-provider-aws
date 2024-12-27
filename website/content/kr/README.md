@@ -1,13 +1,3 @@
----
-title: Documentation
-linkTitle: Docs
-weight: 20
-cascade:
-  type: docs
-  tags:
-    - preview
----
-
 # Documentation
 
 Karpenter는 Kubernetes를 위해 만들어진 오픈소스 노드 수명주기 관리 프로젝트입니다. Kubernetes 클러스터에 Karpenter를 추가하면 해당 클러스터에서 워크로드를 실행하는 효율성과 비용을 크게 개선할 수 있습니다. Karpenter는 다음과 같이 작동합니다:

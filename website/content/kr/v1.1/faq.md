@@ -7,7 +7,7 @@ description: Karpenter 자주 묻는 질문 리뷰
 
 # FAQs
 
-### 일반
+### General
 
 #### Karpenter를 프로덕션에서 사용해도 안전한가요?
 
@@ -49,7 +49,7 @@ Karpenter는 \[잘 알려진 레이블]\(\{{< ref "./concepts/scheduling/#suppor
 
 Karpenter 보안 문제를 보고하는 방법은 [보안 문제 보고](https://github.com/aws/karpenter/security/policy)를 참조하세요. 공개 GitHub 이슈를 생성하지 마세요.
 
-### 호환성
+### Compatibility
 
 #### Karpenter는 어떤 버전의 Kubernetes를 지원하나요?
 
@@ -68,7 +68,7 @@ NodePool은 EKS 관리형 노드 그룹 및 EC2 Auto Scaling 그룹과 같은 �
 * Kubernetes Cluster Autoscaler: Karpenter는 Cluster Autoscaler와 함께 작동할 수 있습니다. 자세한 내용은 \[Kubernetes Cluster Autoscaler]\(\{{< ref "./concepts/#kubernetes-cluster-autoscaler" >\}})를 참조하세요.
 * Kubernetes Scheduler: Karpenter는 Kubernetes 스케줄러가 스케줄 불가능으로 표시한 파드의 스케줄링에 중점을 둡니다. Karpenter가 Kubernetes 스케줄러와 어떻게 상호작용하는지에 대한 자세한 내용은 \[스케줄링]\(\{{< ref "./concepts/scheduling" >\}})을 참조하세요.
 
-### 프로비저닝
+### Provisioning
 
 #### Karpenter NodePool은 어떤 기능을 지원하나요?
 
@@ -131,9 +131,9 @@ Karpenter가 다양한 인스턴스 유형 세트에서 노드를 프로비저�
 
 Karpenter는 각 인스턴스 유형에 대해 존과 용량 유형의 조합인 "오퍼링" 개념을 가지고 있습니다. Fleet API가 스팟 인스턴스에 대해 용량 부족 오류를 반환할 때마다, 해당 특정 오퍼링은 Karpenter가 다른 옵션으로 진행할 수 있도록 (전체 NodePool에서) 일시적으로 고려 대상에서 제외됩니다.
 
-#### Does Karpenter support IPv6?
+#### Karpenter가 IPv6를 지원하나요?
 
-Yes! Karpenter dynamically discovers if you are running in an IPv6 cluster by checking the kube-dns service's cluster-ip. When using an AMI Family such as `AL2`, Karpenter will automatically configure the EKS Bootstrap script for IPv6. Some EC2 instance types do not support IPv6 and the Amazon VPC CNI only supports instance types that run on the Nitro hypervisor. It's best to add a requirement to your NodePool to only allow Nitro instance types:
+네! Karpenter는 kube-dns 서비스의 cluster-ip를 확인하여 IPv6 클러스터에서 실행 중인지 동적으로 감지합니다. AL2와 같은 AMI Family를 사용할 때, Karpenter는 자동으로 IPv6용 EKS Bootstrap 스크립트를 구성합니다. 일부 EC2 인스턴스 유형은 IPv6를 지원하지 않으며, Amazon VPC CNI는 Nitro 하이퍼바이저에서 실행되는 인스턴스 유형만 지원합니다. NodePool에 Nitro 인스턴스 유형만 허용하도록 요구사항을 추가하는 것이 가장 좋습니다:Does Karpenter support IPv6?
 
 ```
 apiVersion: karpenter.sh/v1
@@ -149,19 +149,19 @@ spec:
             - nitro
 ```
 
-For more documentation on enabling IPv6 with the Amazon VPC CNI, see the [docs](https://docs.aws.amazon.com/eks/latest/userguide/cni-ipv6.html).
+Amazon VPC CNI에서 IPv6를 활성화하는 방법에 대한 자세한 내용은 [문서](https://docs.aws.amazon.com/eks/latest/userguide/cni-ipv6.html)를 참조하세요.
 
-{
+\{\{% alert title="Windows Support Notice" color="warning" %\}}\
+Windows 노드는 IPv6를 지원하지 않습니다. \
+\{\{% /alert %\}}
 
-} Windows nodes do not support IPv6. {}
+#### 대기 중인 파드를 스케줄링하기 위해, 왜 추가 노드가 시작되었다가 비어있는 상태로 나중에 제거되는 것을 보게 되나요?
 
-#### Why do I see extra nodes get launched to schedule pending pods that remain empty and are later removed?
+데몬셋, userData 구성 또는 노드가 프로비저닝된 후 테인트를 적용하는 다른 워크로드가 있을 수 있습니다. 테인트가 적용된 후, Karpenter는 추가된 테인트로 인해 파드가 이 새로운 노드에 스케줄링될 수 없음을 감지합니다. 결과적으로 Karpenter는 또 다른 노드를 프로비저닝합니다. 일반적으로 원래 노드의 테인트가 제거되고 파드가 해당 노드에 스케줄링되면, 추가된 새 노드는 사용되지 않은 채로 남아 비어있음/통합에 의해 제거됩니다. 테인트가 충분히 빨리 제거되지 않으면, Karpenter가 비어있음 통합을 통해 파드가 스케줄링되기 전에 원래 노드를 제거할 수 있습니다. 이로 인해 대기 중인 파드가 스케줄링되지 않은 채로 노드가 계속해서 프로비저닝되고 통합되는 무한 루프가 발생할 수 있습니다.
 
-You might have a daemonset, userData configuration, or some other workload that applies a taint after a node is provisioned. After the taint is applied, Karpenter will detect that the pod cannot be scheduled to this new node due to the added taint. As a result, Karpenter will provision yet another node. Typically, the original node has the taint removed and the pod schedules to it, leaving the extra new node unused and reaped by emptiness/consolidation. If the taint is not removed quickly enough, Karpenter may remove the original node before the pod can be scheduled via emptiness consolidation. This could result in an infinite loop of nodes being provisioned and consolidated without the pending pod ever scheduling.
+해결책은 \[startupTaints]\(\{{\<ref "./concepts/nodepools/#cilium-startup-taint" >\}})를 구성하여 Karpenter가 노드가 파드를 받을 준비가 되지 않은 상태에서 파드가 스케줄링되지 않도록 하는 데 필요한 임시 테인트를 인식하도록 하는 것입니다.
 
-The solution is to configure \[startupTaints]\(\{{\<ref "./concepts/nodepools/#cilium-startup-taint" >\}}) to make Karpenter aware of any temporary taints that are needed to ensure that pods do not schedule on nodes that are not yet ready to receive them.
-
-Here's an example for Cilium's startup taint.
+다음은 Cilium의 시작 테인트 예시입니다.
 
 ```
 apiVersion: karpenter.sh/v1
@@ -177,120 +177,116 @@ spec:
 
 ### Scheduling
 
-#### When using preferred scheduling constraints, Karpenter launches the correct number of nodes at first. Why do they then sometimes get consolidated immediately?
+#### 선호하는 스케줄링 제약 조건을 사용할 때, Karpenter는 처음에 올바른 수의 노드를 시작합니다. 그런데 왜 때때로 즉시 통합되나요?
 
-`kube-scheduler` is responsible for the scheduling of pods, while Karpenter launches the capacity. When using any sort of preferred scheduling constraint, `kube-scheduler` will schedule pods to nodes anytime it is possible.
+`kube-scheduler`는 파드의 스케줄링을 담당하고, Karpenter는 용량을 시작합니다. 선호하는 스케줄링 제약 조건을 사용할 때, `kube-scheduler`는 가능한 경우 언제든지 노드에 파드를 스케줄링합니다.
 
-As an example, suppose you scale up a deployment with a preferred zonal topology spread and none of the newly created pods can run on your existing cluster. Karpenter will then launch multiple nodes to satisfy that preference. If a) one of the nodes becomes ready slightly faster than other nodes and b) has enough capacity for multiple pods, `kube-scheduler` will schedule as many pods as possible to the single ready node, so they won't remain unschedulable. It doesn't consider the in-flight capacity that will be ready in a few seconds. If all the pods fit on the single node, the remaining nodes that Karpenter has launched aren't needed when they become ready and consolidation will delete them.
+예를 들어, 선호하는 영역 토폴로지 분배로 디플로이먼트를 스케일 업하고 새로 생성된 파드가 기존 클러스터에서 실행될 수 없다고 가정해보겠습니다. Karpenter는 이 선호도를 충족하기 위해 여러 노드를 시작합니다. 만약 a) 한 노드가 다른 노드보다 약간 더 빨리 준비되고 b) 여러 파드를 수용할 수 있는 용량이 있다면, `kube-scheduler`는 가능한 한 많은 파드를 단일 준비된 노드에 스케줄링하여 스케줄링 불가능한 상태가 되지 않도록 합니다. 몇 초 안에 준비될 진행 중인 용량은 고려하지 않습니다. 모든 파드가 단일 노드에 맞는 경우, Karpenter가 시작한 나머지 노드는 준비되었을 때 필요하지 않게 되어 통합 과정에서 삭제됩니다.
 
-#### When deploying an additional DaemonSet to my cluster, why does Karpenter not scale-up my nodes to support the extra DaemonSet?
+#### 클러스터에 추가 DaemonSet을 배포할 때, Karpenter가 추가 DaemonSet을 지원하기 위해 노드를 스케일 업하지 않는 이유는 무엇인가요?
 
-Karpenter will not scale-up more capacity for an additional DaemonSet on its own. This is due to the fact that the only pod that would schedule to that new node would be the DaemonSet pod, which is consuming additional capacity with no benefit. Therefore, Karpenter only considers DaemonSets when doing overhead calculations for scale-ups to workload pods.
+Karpenter는 추가 DaemonSet을 위해 자체적으로 더 많은 용량을 스케일 업하지 않습니다. 이는 새 노드에 스케줄링될 유일한 파드가 DaemonSet 파드이며, 이는 이점 없이 추가 용량을 소비하기 때문입니다. 따라서 Karpenter는 워크로드 파드에 대한 스케일 업을 위한 오버헤드 계산을 할 때만 DaemonSet을 고려합니다.
 
-To avoid new DaemonSets failing to schedule to existing Nodes, you should [set a high priority on your DaemonSet pods with a `preemptionPolicy: PreemptLowerPriority`](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#example-priorityclass) so that DaemonSet pods will be guaranteed to schedule on all existing and new Nodes. For existing Nodes, this will cause some pods with lower priority to get [preempted](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#preemption), replaced by the DaemonSet and re-scheduled onto new capacity that Karpenter will launch in response to the new pending pods.
+새로운 DaemonSet이 기존 노드에 스케줄링되지 못하는 것을 방지하기 위해, [DaemonSet 파드에 `preemptionPolicy: PreemptLowerPriority`로 높은 우선순위를 설정](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#example-priorityclass)하여 DaemonSet 파드가 모든 기존 및 새 노드에 스케줄링되도록 보장해야 합니다. 기존 노드의 경우, 이로 인해 우선순위가 낮은 일부 파드가 [선점](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#preemption)되어 DaemonSet으로 대체되고, Karpenter가 새로운 대기 중인 파드에 대응하여 시작하는 새로운 용량에 다시 스케줄링됩니다.
 
-The Karpenter maintainer team is also discussing a consolidation mechanism [in this Github issue](https://github.com/aws/karpenter/issues/3256) that would allow existing capacity to be rolled when a new DaemonSet is deployed without having to set [priority or preemption](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/) on the pods.
+Karpenter 유지보수 팀은 또한 파드에 [우선순위나 선점](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/)을 설정하지 않고도 새로운 DaemonSet이 배포될 때 기존 용량을 롤링할 수 있게 하는 통합 메커니즘을 [이 Github 이슈](https://github.com/aws/karpenter/issues/3256)에서 논의하고 있습니다.
 
-#### Why aren’t my Topology Spread Constraints spreading pods across zones?
+#### 내 토폴로지 분배 제약 조건이 영역 전체에 파드를 분배하지 않는 이유는 무엇인가요?
 
-Karpenter will provision nodes according to `topologySpreadConstraints`. However, the Kubernetes scheduler may schedule pods to nodes that do not fulfill zonal spread constraints if the `minDomains` field is not set. If Karpenter launches nodes that can handle more than the required number of pods, and the newly launched nodes initialize at different times, then the Kubernetes scheduler may place more than the desired number of pods on the first node that is Ready.
+Karpenter는 `topologySpreadConstraints`에 따라 노드를 프로비저닝합니다. 하지만 `minDomains` 필드가 설정되지 않은 경우 Kubernetes 스케줄러는 영역 분배 제약 조건을 충족하지 않는 노드에 파드를 스케줄링할 수 있습니다. Karpenter가 필요한 수보다 더 많은 파드를 처리할 수 있는 노드를 시작하고, 새로 시작된 노드가 서로 다른 시간에 초기화되면, Kubernetes 스케줄러는 준비된 첫 번째 노드에 원하는 수보다 더 많은 파드를 배치할 수 있습니다.
 
-The preferred solution is to use the [`minDomains` field in `topologySpreadConstraints`](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#topologyspreadconstraints-field), which is enabled by default starting in Kubernetes 1.27.
+선호되는 해결책은 Kubernetes 1.27부터 기본적으로 활성화되는 [`topologySpreadConstraints`의 `minDomains` 필드](https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/#topologyspreadconstraints-field)를 사용하는 것입니다.
 
-Before `minDomains` was available, another workaround has been to launch a lower [Priority](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/) pause container to each zone before launching the pods that you want to spread across the zones. The lower Priority on these pause pods would mean that they would be preempted when your desired pods are scheduled.
+`minDomains`가 사용 가능하기 전에는, 영역 전체에 분배하려는 파드를 시작하기 전에 각 영역에 낮은 [우선순위](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/)의 일시 중지 컨테이너를 시작하는 것이 다른 해결 방법이었습니다. 이러한 일시 중지 파드의 낮은 우선순위는 원하는 파드가 스케줄링될 때 선점된다는 것을 의미합니다.
 
 ### Workloads
 
-#### How can someone deploying pods take advantage of Karpenter?
+**파드를 배포하는 사람은 어떻게 Karpenter를 활용할 수 있나요?**
 
-See \[Application developer]\(\{{< ref "./concepts/#application-developer" >\}}) for descriptions of how Karpenter matches nodes with pod requests.
+Karpenter가 노드와 파드 요청을 매칭하는 방법에 대한 설명은 \[애플리케이션 개발자]\(\{{< ref "./concepts/#application-developer" >\}})를 참조하세요.
 
-#### Can I use Karpenter with EBS disks per availability zone?
+**가용성 영역별로 EBS 디스크와 함께 Karpenter를 사용할 수 있나요?**
 
-Yes. See \[Persistent Volume Topology]\(\{{< ref "./concepts/scheduling#persistent-volume-topology" >\}}) for details.
+네. 자세한 내용은 \[영구 볼륨 토폴로지]\(\{{< ref "./concepts/scheduling#persistent-volume-topology" >\}})를 참조하세요.
 
-#### Can I set `--max-pods` on my nodes?
+**노드에서 `--max-pods`를 설정할 수 있나요?**
 
-Yes, see the \[KubeletConfiguration Section in the NodePool docs]\(\{{\<ref "./concepts/nodepools#spectemplatespeckubelet" >\}}) to learn more.
+네, 자세한 내용은 \[NodePool 문서의 KubeletConfiguration 섹션]\(\{{\<ref "./concepts/nodepools#spectemplatespeckubelet" >\}})을 참조하세요.
 
-#### Why do the Windows2019 and Windows2022 AMI families only support Windows Server Core?
+**Windows2019와 Windows2022 AMI 제품군이 Windows Server Core만 지원하는 이유는 무엇인가요?**
 
-The difference between the Core and Full variants is that Core is a minimal OS with less components and no graphic user interface (GUI) or desktop experience. `Windows2019` and `Windows2022` AMI families use the Windows Server Core option for simplicity, but if required, you can specify a custom AMI to run Windows Server Full.
+Core와 Full 변형의 차이점은 Core가 더 적은 구성 요소를 가진 최소한의 OS이며 그래픽 사용자 인터페이스(GUI)나 데스크톱 환경이 없다는 것입니다. `Windows2019`와 `Windows2022` AMI 제품군은 단순성을 위해 Windows Server Core 옵션을 사용하지만, 필요한 경우 Windows Server Full을 실행하도록 사용자 지정 AMI를 지정할 수 있습니다.
 
-You can specify the [Amazon EKS optimized AMI](https://docs.aws.amazon.com/eks/latest/userguide/eks-optimized-windows-ami.html) with Windows Server 2022 Full for Kubernetes 1.31 by configuring an `amiSelector` that references the AMI name.
+Kubernetes 1.31용 Windows Server 2022 Full이 포함된 [Amazon EKS 최적화 AMI](https://docs.aws.amazon.com/eks/latest/userguide/eks-optimized-windows-ami.html)는 AMI 이름을 참조하는 `amiSelector`를 구성하여 지정할 수 있습니다.
 
 ```yaml
 amiSelectorTerms:
     - name: Windows_Server-2022-English-Full-EKS_Optimized-1.31*
 ```
 
-#### Can I use Karpenter to scale my workload's pods?
+**Karpenter를 사용하여 워크로드의 파드를 스케일링할 수 있나요?**
 
-Karpenter is a node autoscaler which will create new nodes in response to unschedulable pods. Scaling the pods themselves is outside of its scope. This is the realm of pod autoscalers such as the [Vertical Pod Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler) (for scaling an individual pod's resources) or the [Horizontal Pod Autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) (for scaling replicas). We also recommend taking a look at [Keda](https://keda.sh/) if you're looking for more advanced autoscaling capabilities for pods.
+Karpenter는 스케줄링할 수 없는 파드에 대응하여 새로운 노드를 생성하는 노드 자동 스케일러입니다. 파드 자체의 스케일링은 그 범위를 벗어납니다. 이는 [Vertical Pod Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)(개별 파드의 리소스 스케일링용) 또는 [Horizontal Pod Autoscaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)(복제본 스케일링용)와 같은 파드 자동 스케일러의 영역입니다. 파드에 대한 더 고급 자동 스케일링 기능을 찾고 계시다면 [Keda](https://keda.sh/)도 살펴보시는 것을 추천합니다.
 
 ### Deprovisioning
 
-#### How does Karpenter deprovision nodes?
+#### Karpenter는 어떻게 노드를 프로비저닝 해제하나요?
 
-See \[Deprovisioning nodes]\(\{{< ref "./concepts/disruption" >\}}) for information on how Karpenter deprovisions nodes.
+Karpenter가 노드를 프로비저닝 해제하는 방법에 대한 정보는 \[노드 프로비저닝 해제]\(\{{< ref "./concepts/disruption" >\}})를 참조하세요.
 
 ### Upgrading Karpenter
 
-#### How do I upgrade Karpenter?
+#### Karpenter를 어떻게 업그레이드하나요?
 
-Karpenter is a controller that runs in your cluster, but it is not tied to a specific Kubernetes version, as the Cluster Autoscaler is. Use your existing upgrade mechanisms to upgrade your core add-ons in Kubernetes and keep Karpenter up to date on bug fixes and new features.
+Karpenter는 클러스터에서 실행되는 컨트롤러이지만, Cluster Autoscaler와 달리 특정 Kubernetes 버전에 종속되지 않습니다. 기존의 업그레이드 메커니즘을 사용하여 Kubernetes의 핵심 애드온을 업그레이드하고 Karpenter를 버그 수정과 새로운 기능으로 최신 상태로 유지하세요.
 
-Karpenter requires proper permissions in the `KarpenterNode IAM Role` and the `KarpenterController IAM Role`. To upgrade Karpenter to version `$VERSION`, make sure that the `KarpenterNode IAM Role` and the `KarpenterController IAM Role` have the right permission described in `https://karpenter.sh/$VERSION/getting-started/getting-started-with-karpenter/cloudformation.yaml`. Next, locate `KarpenterController IAM Role` ARN (i.e., ARN of the resource created in [Create the KarpenterController IAM Role](../getting-started/getting-started-with-karpenter/#create-the-karpentercontroller-iam-role)) and pass them to the Helm upgrade command. {
+Karpenter는 `KarpenterNode IAM Role`과 `KarpenterController IAM Role`에 적절한 권한이 필요합니다. Karpenter를 `$VERSION` 버전으로 업그레이드하려면, `KarpenterNode IAM Role`과 `KarpenterController IAM Role`이 `https://karpenter.sh/$VERSION/getting-started/getting-started-with-karpenter/cloudformation.yaml`에 설명된 올바른 권한을 가지고 있는지 확인하세요. 다음으로, `KarpenterController IAM Role` ARN(즉, KarpenterController IAM Role 생성에서 생성된 리소스의 ARN)을 찾아 Helm 업그레이드 명령에 전달하세요. \{\{% script file="./content/en/{VERSION}/getting-started/getting-started-with-karpenter/scripts/step08-apply-helm-chart.sh" language="bash"%\}}
 
-}
-
-For information on upgrading Karpenter, see the \[Upgrade Guide]\(\{{< ref "./upgrading/upgrade-guide/" >\}}).
+Karpenter 업그레이드에 대한 자세한 정보는 \[업그레이드 가이드]\(\{{< ref "./upgrading/upgrade-guide/" >\}})를 참조하세요.
 
 ### Upgrading Kubernetes Cluster
 
 #### How do I upgrade an EKS Cluster with Karpenter?
 
-{
+\{\{% alert title="Note" color="primary" %\}}\
+Karpenter는 프로덕션 환경에서 사용하기 전에 항상 하위 환경에서 AMI를 검증할 것을 권장합니다. AMI 업그레이드에 대한 모범 사례를 이해하려면 \[AMI 관리]\(\{{\<ref "./tasks/managing-amis" >\}})를 읽어보세요.
 
-} Karpenter recommends that you always validate AMIs in your lower environments before using them in production environments. Read \[Managing AMIs]\(\{{\<ref "./tasks/managing-amis" >\}}) to understand best practices about upgrading your AMIs.
+사용자 지정 AMI를 사용하는 경우, \[`amiSelector`]\(\{{\<ref "./concepts/nodeclasses#specamiselectorterms" >\}})와 일치하는 태그가 있는 새 AMI를 게시하거나 \[`amiSelector`]\(\{{\<ref "./concepts/nodeclasses#specamiselectorterms" >\}}) 필드를 변경하여 새 워커 노드 이미지의 롤아웃을 트리거해야 합니다.\
+\{\{% /alert %\}}
 
-If using a custom AMI, you will need to trigger the rollout of new worker node images through the publication of a new AMI with tags matching the \[`amiSelector`]\(\{{\<ref "./concepts/nodeclasses#specamiselectorterms" >\}}), or a change to the \[`amiSelector`]\(\{{\<ref "./concepts/nodeclasses#specamiselectorterms" >\}}) field. {
+Karpenter의 기본 동작은 Amazon EKS 클러스터를 업그레이드했을 때 노드를 업그레이드합니다. Karpenter는 EKS 컨트롤 플레인 버전과 동기화를 유지하기 위해 노드를 \[드리프트]\(\{{\<ref "./concepts/disruption#drift" >\}})합니다. 드리프트는 `v0.33`부터 기본적으로 활성화됩니다. 이는 클러스터가 업그레이드되는 즉시 Karpenter가 해당 버전의 새로운 AMI를 자동으로 발견한다는 것을 의미합니다.
 
-}
-
-Karpenter's default behavior will upgrade your nodes when you've upgraded your Amazon EKS Cluster. Karpenter will \[drift]\(\{{\<ref "./concepts/disruption#drift" >\}}) nodes to stay in-sync with the EKS control plane version. Drift is enabled by default starting in `v0.33`. This means that as soon as your cluster is upgraded, Karpenter will auto-discover the new AMIs for that version.
-
-Start by [upgrading the EKS Cluster control plane](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html). After the EKS Cluster upgrade completes, Karpenter will Drift and disrupt the Karpenter-provisioned nodes using EKS Optimized AMIs for the previous cluster version by first spinning up replacement nodes. Karpenter respects [Pod Disruption Budgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) (PDB), and automatically \[replaces, cordons, and drains those nodes]\(\{{\<ref "./concepts/disruption#control-flow" >\}}). To best support pods moving to new nodes, follow Kubernetes best practices by setting appropriate pod [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/) and using PDBs.
+[EKS 클러스터 컨트롤 플레인 업그레이드](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)부터 시작하세요. EKS 클러스터 업그레이드가 완료되면, Karpenter는 먼저 대체 노드를 시작하여 이전 클러스터 버전용 EKS 최적화 AMI를 사용하는 Karpenter 프로비저닝된 노드를 드리프트하고 중단시킵니다. Karpenter는 [Pod Disruption Budgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)(PDB)를 준수하고, 자동으로 \[해당 노드들을 교체, 코든, 드레인]\(\{{\<ref "./concepts/disruption#control-flow" >\}})합니다. 파드가 새 노드로 이동하는 것을 최적으로 지원하기 위해, 적절한 파드 [Resource Quotas](https://kubernetes.io/docs/concepts/policy/resource-quotas/)를 설정하고 PDB를 사용하는 Kubernetes 모범 사례를 따르세요.
 
 ### Interruption Handling
 
-#### Should I use Karpenter interruption handling alongside Node Termination Handler?
+#### Karpenter 중단 처리와 Node Termination Handler를 함께 사용해야 하나요?
 
-No. We recommend against using Node Termination Handler alongside Karpenter due to conflicts that could occur from the two components handling the same events.
+아니요. 두 컴포넌트가 동일한 이벤트를 처리할 때 발생할 수 있는 충돌 때문에 Karpenter와 함께 Node Termination Handler를 사용하지 않는 것을 권장합니다.
 
-#### Why should I migrate from Node Termination Handler?
+#### Node Termination Handler에서 마이그레이션해야 하는 이유는 무엇인가요?
 
-Karpenter's native interruption handling offers two main benefits over the standalone Node Termination Handler component:
+Karpenter의 네이티브 중단 처리는 독립형 Node Termination Handler 컴포넌트에 비해 두 가지 주요 이점을 제공합니다:
 
-1. You don't have to manage and maintain a separate component to exclusively handle interruption events.
-2. Karpenter's native interruption handling coordinates with other deprovisioning so that consolidation, expiration, etc. can be aware of interruption events and vice-versa.
+1. 중단 이벤트를 독점적으로 처리하기 위한 별도의 컴포넌트를 관리하고 유지할 필요가 없습니다.
+2. Karpenter의 네이티브 중단 처리는 다른 프로비저닝 해제와 조정하여 통합, 만료 등이 중단 이벤트를 인식할 수 있고 그 반대도 가능합니다.
 
-#### Why am I receiving QueueNotFound errors when I set `--interruption-queue`?
+#### `--interruption-queue`를 설정할 때 QueueNotFound 오류가 발생하는 이유는 무엇인가요?
 
-Karpenter requires a queue to exist that receives event messages from EC2 and health services in order to handle interruption messages properly for nodes.
+Karpenter는 노드에 대한 중단 메시지를 적절히 처리하기 위해 EC2와 헬스 서비스로부터 이벤트 메시지를 수신하는 큐가 존재해야 합니다.
 
-Details on the types of events that Karpenter handles can be found in the \[Interruption Handling Docs]\(\{{< ref "./concepts/disruption/#interruption" >\}}).
+Karpenter가 처리하는 이벤트 유형에 대한 자세한 내용은 \[중단 처리 문서]\(\{{< ref "./concepts/disruption/#interruption" >\}})에서 확인할 수 있습니다.
 
-Details on provisioning the SQS queue and EventBridge rules can be found in the \[Getting Started Guide]\(\{{< ref "./getting-started/getting-started-with-karpenter/#create-the-karpenter-infrastructure-and-iam-roles" >\}}).
+SQS 큐와 EventBridge 규칙 프로비저닝에 대한 자세한 내용은 \[시작 가이드]\(\{{< ref "./getting-started/getting-started-with-karpenter/#create-the-karpenter-infrastructure-and-iam-roles" >\}})에서 확인할 수 있습니다.
 
 ### Consolidation
 
-#### Why do I sometimes see an extra node get launched when updating a deployment that remains empty and is later removed?
+#### 디플로이먼트를 업데이트할 때 때때로 빈 상태로 유지되다가 나중에 제거되는 추가 노드가 시작되는 것을 보는 이유는 무엇인가요?
 
-Consolidation packs pods tightly onto nodes which can leave little free allocatable CPU/memory on your nodes. If a deployment uses a deployment strategy with a non-zero `maxSurge`, such as the default 25%, those surge pods may not have anywhere to run. In this case, Karpenter will launch a new node so that the surge pods can run and then remove it soon after if it's not needed.
+통합은 파드를 노드에 빽빽하게 패킹하여 노드에 할당 가능한 CPU/메모리가 거의 남지 않을 수 있습니다. 디플로이먼트가 기본값 25%와 같은 0이 아닌 `maxSurge`를 사용하는 배포 전략을 사용하는 경우, 이러한 서지 파드가 실행될 곳이 없을 수 있습니다. 이 경우 Karpenter는 서지 파드가 실행될 수 있도록 새 노드를 시작한 다음, 필요하지 않은 경우 곧바로 제거합니다.
 
 ### Logging
 
-#### How do I customize or configure the log output?
+#### 로그 출력을 어떻게 사용자 정의하거나 구성할 수 있나요?
 
-Karpenter uses [uber-go/zap](https://github.com/uber-go/zap) for logging. You can customize or configure the log messages by editing the [configmap-logging.yaml](https://github.com/aws/karpenter/blob/main/charts/karpenter/templates/configmap-logging.yaml) `ConfigMap`'s [data.zap-logger-config](https://github.com/aws/karpenter/blob/main/charts/karpenter/templates/configmap-logging.yaml#L26) field. The available configuration options are specified in the [zap.Config godocs](https://pkg.go.dev/go.uber.org/zap#Config).
+Karpenter는 로깅에 [uber-go/zap](https://github.com/uber-go/zap)을 사용합니다. [configmap-logging.yaml](https://github.com/aws/karpenter/blob/main/charts/karpenter/templates/configmap-logging.yaml)의 `ConfigMap`의 [data.zap-logger-config](https://github.com/aws/karpenter/blob/main/charts/karpenter/templates/configmap-logging.yaml#L26) 필드를 편집하여 로그 메시지를 사용자 정의하거나 구성할 수 있습니다. 사용 가능한 구성 옵션은 [zap.Config godocs](https://pkg.go.dev/go.uber.org/zap#Config)에 명시되어 있습니다.

@@ -1,13 +1,13 @@
 ---
-title: "Getting Started"
-linkTitle: "Getting Started"
+title: Getting Started
+linkTitle: Getting Started
 weight: 10
-description: >
-  Choose from different methods to get started with Karpenter
+description: Choose from different methods to get started with Karpenter
 ---
 
+# Getting Started
 
-To get started with Karpenter, the [Getting Started with Karpenter]({{< relref "getting-started-with-karpenter" >}}) guide provides an end-to-end procedure for creating a cluster (with `eksctl`) and adding Karpenter.
+To get started with Karpenter, the \[Getting Started with Karpenter]\(\{{< relref "getting-started-with-karpenter" >\}}) guide provides an end-to-end procedure for creating a cluster (with `eksctl`) and adding Karpenter.
 
 See the [AKS Node autoprovisioning article](https://learn.microsoft.com/azure/aks/node-autoprovision) on how to use Karpenter on Azure's AKS or go to the [Karpenter provider for Azure open source repository](https://github.com/Azure/karpenter-provider-azure) for self-hosting on Azure and additional information.
 

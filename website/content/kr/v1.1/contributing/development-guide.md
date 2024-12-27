@@ -1,29 +1,30 @@
 ---
-title: "Development Guide"
-linkTitle: "Development Guide"
+title: Development Guide
+linkTitle: Development Guide
 weight: 80
-description: >
-  Set up a Karpenter development environment
+description: Set up a Karpenter development environment
 ---
 
-## Dependencies
+# Development Guide
+
+### Dependencies
 
 The following tools are required for contributing to the Karpenter project.
 
-| Package                                                            | Version  | Install                                        |
-| ------------------------------------------------------------------ | -------- | ---------------------------------------------- |
-| [go](https://golang.org/dl/)                                       | v1.19+   | [Instructions](https://golang.org/doc/install) |
-| [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |          | `brew install kubectl`                         |
-| [helm](https://helm.sh/docs/intro/install/)                        |          | `brew install helm`                            |
-| Other tools                                                        |          | `make toolchain`                               |
+| Package                                                            | Version | Install                                        |
+| ------------------------------------------------------------------ | ------- | ---------------------------------------------- |
+| [go](https://golang.org/dl/)                                       | v1.19+  | [Instructions](https://golang.org/doc/install) |
+| [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) |         | `brew install kubectl`                         |
+| [helm](https://helm.sh/docs/intro/install/)                        |         | `brew install helm`                            |
+| Other tools                                                        |         | `make toolchain`                               |
 
-## Developing
+### Developing
 
-### Setup / Teardown
+#### Setup / Teardown
 
-Based on how you are running your Kubernetes cluster, follow the [Environment specific setup](#environment-specific-setup) to configure your environment before you continue. You can choose to either run the Karpenter controller locally on your machine, pointing to the Kubernetes cluster specified in your `~/.kube/config` or inside the Kubernetes cluster specified in your `~/.kube/config` deployed with [Helm](https://helm.sh/).
+Based on how you are running your Kubernetes cluster, follow the [Environment specific setup](development-guide.md#environment-specific-setup) to configure your environment before you continue. You can choose to either run the Karpenter controller locally on your machine, pointing to the Kubernetes cluster specified in your `~/.kube/config` or inside the Kubernetes cluster specified in your `~/.kube/config` deployed with [Helm](https://helm.sh/).
 
-#### Locally
+**Locally**
 
 Once you have your environment set up, run the following commands to run the Karpenter Go binary against the Kubernetes cluster specified in your `~/.kube/config`
 
@@ -31,28 +32,28 @@ Once you have your environment set up, run the following commands to run the Kar
 make run
 ```
 
-#### Inside a Kubernetes Cluster
+**Inside a Kubernetes Cluster**
 
-Once you have your environment set up, to install Karpenter in the Kubernetes cluster specified in your `~/.kube/config`  run the following commands.
+Once you have your environment set up, to install Karpenter in the Kubernetes cluster specified in your `~/.kube/config` run the following commands.
 
 ```bash
 make apply # Install Karpenter
 make delete # Uninstall Karpenter
 ```
 
-### Developer Loop
+#### Developer Loop
 
 * Make sure dependencies are installed
-    * Run `make codegen` to make sure yaml manifests are generated (requires a working set of AWS credentials, see [Specifying Credentials](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials))
-    * Run `make toolchain` to install cli tools for building and testing the project
+  * Run `make codegen` to make sure yaml manifests are generated (requires a working set of AWS credentials, see [Specifying Credentials](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html#specifying-credentials))
+  * Run `make toolchain` to install cli tools for building and testing the project
 * You will need a personal development image repository (e.g. ECR)
-    * Make sure you have valid credentials to your development repository.
-    * `$KO_DOCKER_REPO` must point to your development repository
-    * Your cluster must have permissions to read from the repository
+  * Make sure you have valid credentials to your development repository.
+  * `$KO_DOCKER_REPO` must point to your development repository
+  * Your cluster must have permissions to read from the repository
 
-### Build and Deploy
+#### Build and Deploy
 
-*Note: these commands do not rely on each other and may be executed independently*
+_Note: these commands do not rely on each other and may be executed independently_
 
 ```bash
 make apply # quickly deploy changes to your cluster
@@ -65,13 +66,13 @@ If you are only interested in building the Karpenter images and not deploying th
 make image # build and push the karpenter images
 ```
 
-### Testing
+#### Testing
 
 ```bash
 make test       # E2E correctness tests
 ```
 
-### Change Log Level
+#### Change Log Level
 
 By default, `make apply` will set the log level to debug. You can change the log level by setting the log level in your Helm values.
 
@@ -79,7 +80,7 @@ By default, `make apply` will set the log level to debug. You can change the log
 --set logLevel=debug
 ```
 
-### Debugging Metrics
+#### Debugging Metrics
 
 OSX:
 
@@ -93,7 +94,7 @@ Linux:
 gio open http://localhost:8080/metrics && kubectl port-forward service/karpenter -n karpenter 8080
 ```
 
-### Tailing Logs
+#### Tailing Logs
 
 While you can tail Karpenter's logs with kubectl, there's a number of tools out there that enhance the experience. We recommend [Stern](https://pkg.go.dev/github.com/planetscale/stern#section-readme):
 
@@ -101,13 +102,11 @@ While you can tail Karpenter's logs with kubectl, there's a number of tools out 
 stern -n karpenter -l app.kubernetes.io/name=karpenter
 ```
 
-## Environment specific setup
+### Environment specific setup
 
-### AWS
+#### AWS
 
-For local development on Karpenter you will need a Docker repo which can manage your images for Karpenter components.
-You can use the following command to provision an ECR repository. We recommend using a single "dev" repository for 
-development across multiple projects, and to use specific image hashes instead of image tags. 
+For local development on Karpenter you will need a Docker repo which can manage your images for Karpenter components. You can use the following command to provision an ECR repository. We recommend using a single "dev" repository for development across multiple projects, and to use specific image hashes instead of image tags.
 
 ```bash
 aws ecr create-repository \
@@ -129,18 +128,21 @@ Finally, to deploy the correct IAM permissions, including the instance profile f
 make setup
 ```
 
-## Profiling memory
+### Profiling memory
+
 Karpenter exposes a pprof endpoint on its metrics port.
 
 Learn about profiling with pprof: https://jvns.ca/blog/2017/09/24/profiling-go-with-pprof/
 
-### Prerequisites
+#### Prerequisites
+
 ```
 brew install graphviz
 go install github.com/google/pprof@latest
 ```
 
-### Get a profile
+#### Get a profile
+
 ```
 # Connect to the metrics endpoint
 kubectl port-forward service/karpenter -n karpenter 8080

@@ -1,7 +1,9 @@
 ---
-title: "Reference"
-linkTitle: "Reference"
+title: Reference
+linkTitle: Reference
 weight: 50
-description: >
-  Reference documentation for Karpenter
+description: Reference documentation for Karpenter
 ---
+
+# Reference
+
